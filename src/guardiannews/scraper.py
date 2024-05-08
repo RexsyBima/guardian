@@ -1,26 +1,28 @@
+import json
 import requests
-import  os
 
 from datetime import datetime
+from typing import Any
 from bs4 import BeautifulSoup
-from typing import Optional, Any
+from rich import print
 
 
 # url = "https://www.theguardian.com/ |artanddesign |/2024/apr/24/|  claudette-johnson-art-cotton-capital-nominated-for-turner-prize"
 
 
 class GuardianSpider(object):
-    def __init__(self, category: Optional[str] = None, subcategory: Optional[str] = None):
+    def __init__(self):
         self.base_url: str = "https://www.theguardian.com"
-        self.category: Optional[str] = category
+        # self.category: Optional[str] = category
         self.date: str = datetime.now().strftime("/%Y/%b/%d/")
-        self.subcategory: Optional[str] = subcategory
+        # self.subcategory: Optional[str] = subcategory
 
-    def get_latest_news(self):
+    def get_response(self, url: str) -> BeautifulSoup:
         headers: dict[str, Any] = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
         }
-        res = requests.get(os.path.join(self.base_url, "international"), headers=headers)
+
+        res = requests.get(url=url, headers=headers)
         print("Site Status Code: ", res.status_code)
 
         #  response checking
@@ -31,10 +33,46 @@ class GuardianSpider(object):
         # scrape process
         soup: BeautifulSoup = BeautifulSoup(res.text, "html.parser")
 
+        return soup
+
+    def get_latest_news(self, soup: BeautifulSoup):
+        # res = requests.get(os.path.join(self.base_url, "international"), headers=headers)
+
         contents = soup.find("div", attrs={"id": "container-headlines"}).find_all("li")
         for content in contents:
             title: str = content.find("span", attrs={"class": "show-underline"}).text.strip()
             print(title)
+
+    def get_category(self, soup: BeautifulSoup):
+        categories: list[dict[str, str]] = []
+        navbar = soup.find('div', attrs={'data-component': 'nav2'})
+
+        # get pillar list
+        pillars = navbar.find('ul', attrs={'data-testid': 'pillar-list'}).find_all('a')
+        for pillar in pillars:
+            link = pillar.get('href')
+            category = pillar.text
+
+            data_pillar: dict[str, str] = {
+                "link": link,
+                "category": category
+            }
+            categories.append(data_pillar)
+
+        menubar = navbar.find('ul', attrs={'role': 'menubar'}).find_all('a')
+        for menu in menubar:
+            data_menubar: dict[str, str] = {
+                'link': menu.get('href'),
+                'category': menu.text
+            }
+            categories.append(data_menubar)
+
+        # return hasil
+        print("Generate URL")
+        with open('categories.json', 'w') as json_file:
+            json.dump(categories, json_file)
+
+        return categories
 
     def get_spesific_news(self):
         pass

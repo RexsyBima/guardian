@@ -1,6 +1,6 @@
-from guardiannews.scraper import GuardianSpider
+from guardiannews.runner import Run
 
-spider: GuardianSpider = GuardianSpider()
+runner = Run()
 
 if __name__ == '__main__':
-    spider.get_latest_news()
+    runner.scrape_category()
