@@ -1,5 +1,6 @@
 import json
 import requests
+from guardiannews.models import NewsScraped
 
 from datetime import datetime
 from typing import Any
@@ -26,9 +27,11 @@ class GuardianSpider(object):
         print("Site Status Code: ", res.status_code)
 
         #  response checking
-        f = open("response.html", 'w+')
-        f.write(res.text)
-        f.close()
+        with open("response.html", "w", encoding="utf-8") as file:
+            file.write(res.text)
+        #f = open("response.html", 'w+')
+        #f.write(res.text)
+        #f.close()
 
         # scrape process
         soup: BeautifulSoup = BeautifulSoup(res.text, "html.parser")
@@ -80,5 +83,28 @@ class GuardianSpider(object):
     def get_news_by_category(self):
         pass
 
-    def get_news_by_subcategory(self):
-        pass
+    def get_news_by_subcategory(self, url : str ):
+        soup = self.get_response(url)
+        urls : list[BeautifulSoup] = soup.find_all("a", class_= "dcr-lv2v9o")
+        urls = [f"https://www.theguardian.com{url['href']}" for url in urls]
+
+        return urls
+
+    def get_detail_news(self, url : str):
+        soup = self.get_response(url)
+        title = soup.find("div", attrs={"class" : "dcr-1msbrj1"}) #class_="dcr-tjsa08" == attrs={"class" : "dcr-tjsa08"}
+        title = title.get_text()
+        tag_news = soup.find("aside", class_="dcr-ien304")
+        tag_news : list[BeautifulSoup] = tag_news.find_all("span")[-1].get_text()
+        paragraphs : list[BeautifulSoup] = soup.find_all("p", class_="dcr-iy9ec7")
+        paragraphs = [i.get_text() for i in paragraphs]
+        paragraphs = "\n".join(paragraphs)
+        authors : list[BeautifulSoup] = soup.find_all("a", rel="author")
+        authors = [i.get_text() for i in authors]
+        published_time = soup.find("span", class_="dcr-u0h1qy").get_text()
+        output = NewsScraped(title=title,
+                             tag_news=tag_news,
+                             paragraphs=paragraphs,
+                             authors=authors,
+                             published_time=published_time)
+        return output

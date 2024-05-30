@@ -7,8 +7,8 @@ class Run(object):
     def __init__(self):
         self.spider: GuardianSpider = GuardianSpider()
 
-    def scrape_category(self):
-        soup = self.spider.get_response(os.path.join(self.spider.base_url, "international"))
+    def scrape_category(self) -> None:
+        soup = self.spider.get_response(f"{self.spider.base_url}/international")
         categories = self.spider.get_category(soup)
         print(categories)
 
