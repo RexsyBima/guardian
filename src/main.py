@@ -1,37 +1,47 @@
-from guardiannews.runner import Run
 from guardiannews.models import NewsScraped
-from guardiannews.scraper import GuardianSpider
 import pandas as pd
-runner = Run()
+from guardiannews.requests_custom import CustomRequests
+from guardiannews.soup import GuardianSoup
+import datetime
 
-def save_xlsx(input_ : list[NewsScraped]):
+
+def save_xlsx(input_: list[NewsScraped], filename: str = "output.xlsx"):
     input_ = [i.model_dump() for i in input_]
+    time = datetime.datetime.now().strftime("%d-%B-%Y-%H-%M")
     df = pd.DataFrame(input_)
-    df.to_excel("output.xlsx")
+    df.to_excel(f"{time}-{filename}")
+    # "14agustus2024-output.xlsx"
 
 
-if __name__ == '__main__':
-    #runner.scrape_category()
-    scraper = GuardianSpider()
-    urls = scraper.get_news_by_subcategory("https://www.theguardian.com/uk-news")
+def main():
     output = []
-    print(len(urls))
-
-    for url in urls[0:5]:
-        try:
-            item = scraper.get_detail_news(url)
-            output.append(item)
-        except AttributeError:
-            print(f"{url} cant be scraped, may have different html structure ")
+    custom_requests = CustomRequests()
+    url = "https://www.theguardian.com/international"
+    news_categories = GuardianSoup(custom_requests.get_html(url)).get_news_category()
+    for category in news_categories:
+        news_url = GuardianSoup(
+            custom_requests.get_html(category)
+        ).get_news_by_subcategory()
+        for url in news_url[0:2]:
+            print(url)
+            try:
+                html = custom_requests.get_html(url)
+                soup = GuardianSoup(html)
+                data = soup.get_detail_news(url)
+                output.append(data)
+            except AttributeError:
+                print(f"error accessing {url}, HTML structure may be different")
+                pass
     save_xlsx(output)
-    
-    
-    """
-    while True:
-        url = input("url : ")
-    #url = "https://www.theguardian.com/world/article/2024/may/30/all-eyes-on-rafah-how-ai-generated-image-spread-across-social-media"
-        output = scraper.get_detail_news(url)
-        print(output)
-        """
-        
-    
+
+
+def debug_per_news_url():
+    custom_requests = CustomRequests()
+    url = "https://www.theguardian.com/technology/2024/aug/12/susan-wojcicki-obituary"
+    soup = GuardianSoup(custom_requests.get_html(url, True)).get_detail_news(url)
+    print(soup)
+
+
+if __name__ == "__main__":
+    main()
+    # debug_per_news_url()
