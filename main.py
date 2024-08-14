@@ -1,7 +1,7 @@
-from guardiannews.models import NewsScraped
+from src.models import NewsScraped
 import pandas as pd
-from guardiannews.requests_custom import CustomRequests
-from guardiannews.soup import GuardianSoup
+from src.requests_custom import CustomRequests
+from src.soup import GuardianSoup
 import datetime
 
 
