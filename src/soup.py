@@ -17,10 +17,8 @@ class GuardianSoup(BeautifulSoup):
             "h1", attrs={"class": "dcr-u0152o"}
         )  # class_="dcr-tjsa08" == attrs={"class" : "dcr-tjsa08"}
         title = title.get_text()
-        print(title)
         tag_news: list[BeautifulSoup] = self.find_all("li", class_="dcr-ncdwh2")
         tag_news = [t.get_text() for t in tag_news]
-        print(tag_news)
         # tag_news: list[BeautifulSoup] = tag_news.find_all("span")[-1].get_text()
         paragraphs: list[BeautifulSoup] = self.find_all("p", class_="dcr-1hirwfs")
         if len(paragraphs) > 0:
@@ -49,5 +47,4 @@ class GuardianSoup(BeautifulSoup):
     def get_news_category(self):
         categories: list[BeautifulSoup] = self.find_all("li", class_="dcr-4hq641")
         categories = [f"{self.base_url}{a.find('a')['href']}" for a in categories]
-        print(categories)
         return categories
